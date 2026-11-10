@@ -2491,7 +2491,7 @@ html[data-theme=dark] .tabs button.on{color:#fff}
    Construction — budget tracker. UI is Centric's, data is the Construction
    Budget sheet (Apps Script web app).
    ========================================================================== */
-const BUILD = '2026-11-12b';          // shown in Profile, so we can tell which copy is live
+const BUILD = '2026-11-12c';          // shown in Profile, so we can tell which copy is live
 const REFRESH_MS = 2 * 60 * 1000;     // quiet refresh while the app is open
 const LS = { pass:'cbt.pass', api:'cbt.api', data:'cbt.data', synced:'cbt.synced', acct:'ct_last_account', theme:'cbt.theme' };
 
@@ -3233,8 +3233,8 @@ function brickCatBody(cat){
   for (let i=0;i<Math.round(bricks(paidB));i++) fill.push(tint(col,.35));
   const by = {}; ex.forEach(e=>(by[e.date]=by[e.date]||[]).push(e));
   const cols = total <= 10 ? Math.max(4,total) : 10;
-  return `<div class="cathero"><span class="catpill" style="background:${col}">${esc(cat)}</span>
-      <div class="big ${k.budget-k.spent<0?'down':''}" style="margin-top:10px">${fINR(Math.abs(k.budget-k.spent))} <small>${k.budget-k.spent<0?'over':'left'}</small></div>
+  return `<div class="cathero">
+      <div class="big ${k.budget-k.spent<0?'down':''}">${fINR(Math.abs(k.budget-k.spent))} <small>${k.budget-k.spent<0?'over':'left'}</small></div>
       <div class="s"><b>${bN(k.spent)} of ${total}</b> bricks laid · ${pctTxt(k.spent,k.budget)}% of ${fINR(k.budget)}</div></div>
     <div class="bw-wall">${wallSvg(Math.max(total, fill.length), fill, cols)}</div>
     ${k.spent ? `<div class="leg"><span><i style="background:${col}"></i>Paid by ${esc(A)} · ${bN(paidA)}</span><span><i style="background:${tint(col,.35)}"></i>Paid by ${esc(B)} · ${bN(paidB)}</span></div>` : ''}
