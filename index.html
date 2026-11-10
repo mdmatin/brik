@@ -2488,7 +2488,7 @@ html[data-theme=dark] .tabs button.on{color:#fff}
    Construction — budget tracker. UI is Centric's, data is the Construction
    Budget sheet (Apps Script web app).
    ========================================================================== */
-const BUILD = '2026-11-10c';          // shown in Profile, so we can tell which copy is live
+const BUILD = '2026-11-10d';          // shown in Profile, so we can tell which copy is live
 const REFRESH_MS = 2 * 60 * 1000;     // quiet refresh while the app is open
 const LS = { pass:'cbt.pass', api:'cbt.api', data:'cbt.data', synced:'cbt.synced', acct:'ct_last_account', theme:'cbt.theme' };
 
@@ -2962,16 +2962,29 @@ function vbRow(lbl, s, b, total, attr=''){
     <div>${total?'':`<div class="vb-pc num">${Math.round(u*100)}%</div>`}<div class="vb-tr ${over?'over':''} ${u>=0.97?'full':''}"><i style="width:${Math.min(100,u*100).toFixed(1)}%"></i>${total?`<span>${Math.round(u*100)}%</span>`:''}</div>
     <div class="vb-n"><span class="num money ${over?'down':'sp'}">${fINR(s)}</span><span class="num money ${total?'':over?'down':''}">${fINR(b-s)}</span></div></div></div>`;
 }
+/* Centric's budget page pieces: a tinted bar in the category's colour, and a row per line —
+   icon, name and % used, the bar, then spent of budget · left (or over) */
+const OG_PC = { us:0, rt:1, lq:2, in:3, mf:4, pk:5, cr:6, gd:7, bk:8, ep:9, bu:15, ch:11, mg:12, lm:13, br:14 };
+const ogCatCol = cat => { const m = XMAP.find(([re])=>re.test(cat||'')) || [0,'more','ch']; return `var(--pc${OG_PC[m[2]] ?? 11})`; };
+const tbar = (u, col, cls) => `<div class="tbar ${cls||''}" style="--c:${col}"><i style="width:${Math.min(100,Math.max(0,u)*100).toFixed(1)}%"></i></div>`;
+function vbxRow(tile, name, s, b, col, attr){
+  const u = b ? s/b : (s ? 1.01 : 0), over = s > b;
+  return `<div class="row tap vbx" ${attr||''}>${tile}<div class="l">
+    <div class="vbx-h"><div class="n">${esc(name)}</div><div class="vbx-p num ${over?'down':''}">${b ? Math.round(u*100)+'%' : 'No budget'}</div></div>
+    ${tbar(u, over ? 'var(--over)' : col)}
+    <div class="vbx-m"><span class="num money">${fINR(s)} of ${fCompact(b)}</span><span class="num money ${over?'down':''}">${fINR(Math.abs(b-s))} ${over?'over':'left'}</span></div></div></div>`;
+}
+function vbSummary(label, spent, budget, extraRight){
+  const left = budget - spent, u = budget ? spent/budget : 0;
+  return `<div class="card tight vbc"><div class="vb-sum"><div><div class="k">${esc(label)}</div><div class="big num money ${left<0?'down':''}">${bigAmt(fINR(left))}</div></div>${extraRight||''}</div>
+      ${tbar(u, left<0 ? 'var(--over)' : 'var(--blue)', 'big')}
+      <div class="spstats lcr"><div><span>Budget</span><b class="num money">${fINR(budget)}</b></div><div><span>Spent</span><b class="num money">${fINR(spent)}</b></div><div><span>Used</span><b class="num">${Math.round(u*100)}%</b></div></div></div>`;
+}
 function ogBudget(m){
   const cats = m.cats;   // in the Budget tab's order
-  $('#v-budget').innerHTML = `
-    <div class="card tight vbc"><div class="vb-sum"><div><div class="k">Remaining</div><div class="big num money ${m.remaining<0?'down':''}">${bigAmt(fINR(m.remaining))}</div></div></div>
-      ${vbRow('Total', m.spent, m.budget, true)}
-    </div>
+  $('#v-budget').innerHTML = `${vbSummary('Remaining', m.spent, m.budget)}
     <div class="sechead"><h2>Categories</h2><button id="addCat">Add</button></div>
-    <div class="card tight vbc vbcats">
-      ${cats.map(k=>vbRow(k.name, k.spent, k.budget, false, `data-cat="${esc(k.name)}"`)).join('')}
-    </div>`;
+    <div class="card tight">${cats.map(k=>vbxRow(xTile(k.name), k.name, k.spent, k.budget, ogCatCol(k.name), `data-cat="${esc(k.name)}"`)).join('') || '<div class="empty">No budget lines yet</div>'}</div>`;
   $$('#v-budget [data-cat]').forEach(r=>r.onclick=()=>pushPage({ kind:'cat', cat:r.dataset.cat }));
   $('#addCat').onclick = ()=>openX('cat');
 }
@@ -3013,13 +3026,12 @@ function ogCatBody(cat){
   const k = calc().cats.find(x=>x.name===cat) || { name:cat, budget:0, spent:0, subs:[] };
   const ex = D.expenses.filter(e=>e.category===cat).sort((a,b)=>(b.date||'').localeCompare(a.date||'') || b.id-a.id);
   const by = {}; ex.forEach(e=>(by[e.date]=by[e.date]||[]).push(e));
-  return `<div class="card tight vbc"><div class="vb-sum"><div><div class="k">Remaining</div><div class="big num money ${k.budget-k.spent<0?'down':''}">${bigAmt(fINR(k.budget-k.spent))}</div></div><div>${xTile(cat)}</div></div>
-      ${vbRow('Total', k.spent, k.budget, true)}
-    </div>
+  const col = ogCatCol(cat);
+  return `${vbSummary('Remaining', k.spent, k.budget, `<div>${xTile(cat)}</div>`)}
     <div class="sechead"><h2>Subcategories</h2><button id="addSub">Add</button></div>
-    <div class="card tight vbc vbcats">
-      ${k.subs.map(s=>vbRow(s.subcategory || '—', s.spent, s.budgeted, false, `data-sub="${esc(s.subcategory)}"`)).join('')}
-      ${k.unassigned ? vbRow('No subcategory', k.unassigned, 0, false) : ''}
+    <div class="card tight">
+      ${k.subs.map(s=>vbxRow(xTile(cat), s.subcategory || '—', s.spent, s.budgeted, col, `data-sub="${esc(s.subcategory)}"`)).join('')}
+      ${k.unassigned ? vbxRow(xTile(cat), 'No subcategory', k.unassigned, 0, col) : ''}
     </div>
     <p class="hint" style="margin:-6px 24px 6px">Tap a line to change its budget.</p>
     ${whoPaidHtml(ex)}
