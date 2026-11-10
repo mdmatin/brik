@@ -2488,7 +2488,7 @@ html[data-theme=dark] .tabs button.on{color:#fff}
    Construction — budget tracker. UI is Centric's, data is the Construction
    Budget sheet (Apps Script web app).
    ========================================================================== */
-const BUILD = '2026-11-10d';          // shown in Profile, so we can tell which copy is live
+const BUILD = '2026-11-11a';          // shown in Profile, so we can tell which copy is live
 const REFRESH_MS = 2 * 60 * 1000;     // quiet refresh while the app is open
 const LS = { pass:'cbt.pass', api:'cbt.api', data:'cbt.data', synced:'cbt.synced', acct:'ct_last_account', theme:'cbt.theme' };
 
@@ -2904,11 +2904,11 @@ function brickFunds(m){
     ${settleCard(m).replace('data-go="funds" data-sec="settle"','')}
     <div class="seg segwide" id="fundSeg" style="margin:8px 14px 12px">${[['funds','Deliveries'],['settle','Settlements']].map(([k,l])=>`<button data-s="${k}" class="${fundSec===k?'on':''}">${l}</button>`).join('')}</div>
     ${fundSec==='funds'
-      ? (group(funds, fRow) || '<div class="empty">No funds yet — tap + to log some</div>')
+      ? (group(funds, fRow) || '<div class="empty">No funds yet — log them in Centric (money into a construction account)</div>')
       : (group(sets, sRow) || '<div class="empty">No settlements yet — tap + to record one</div>')}`;
   $$('#fundSeg button').forEach(b=>b.onclick=()=>{ fundSec = b.dataset.s; renderFunds(calc()); });
   $$('#v-funds [data-fund]').forEach(r=>r.onclick=()=>{ const f = D.funds.find(x=>String(x.id)===r.dataset.fund); if (!f) return;
-    if (f.linked){ toast('Synced from your Money sheet — change it there'); return; } openX('fund', f); });
+    toast('Funds come from your Money sheet — add or change them in Centric'); });
   $$('#v-funds [data-set]').forEach(r=>r.onclick=()=>{ const t = D.settlements.find(x=>String(x.id)===r.dataset.set); if (t) openX('settle', t); });
 }
 
@@ -3009,14 +3009,14 @@ function ogFunds(m){
     <div class="seg segwide" id="fundSeg">${[['funds','Funds'],['settle','Settlements']].map(([k,l])=>`<button data-s="${k}" class="${fundSec===k?'on':''}">${l}</button>`).join('')}</div>
     ${fundSec==='funds' ? `
       ${ogStandHtml(m)}
-      ${group(funds, fRow) || '<div class="empty">No funds logged yet — tap + to log some</div>'}`
+      ${group(funds, fRow) || '<div class="empty">No funds yet — log them in Centric (money into a construction account)</div>'}`
     : `
       <div class="card tight">${m.people.map(p=>`<div class="row">${personMark(p.name)}<div class="l"><div class="n">${esc(p.name)}</div><div class="m">Paid ${fINR(p.paid)} · fair share ${fINR(m.spent*(p.name===m.A?D.config.split_a:D.config.split_b))}</div></div>
         <div class="r"><div class="v num money ${p.balance>0.5?'up':p.balance<-0.5?'down':''}">${Math.abs(p.balance)<1?'Even':(p.balance>0?'+':'−')+fINR(Math.abs(p.balance)).replace('−','')}</div><div class="s">${Math.abs(p.balance)<1?'&nbsp;':p.balance>0?'is owed':'owes'}</div></div></div>`).join('')}</div>
       ${group(sets, sRow) || '<div class="empty">No settlements yet — tap + to record one</div>'}`}`;
   $$('#fundSeg button').forEach(b=>b.onclick=()=>{ fundSec = b.dataset.s; renderFunds(calc()); window.scrollTo(0,0); });
   $$('#v-funds [data-fund]').forEach(r=>r.onclick=()=>{ const f = D.funds.find(x=>String(x.id)===r.dataset.fund); if (!f) return;
-    if (f.linked){ toast('Synced from your Money sheet — change it there'); return; } openX('fund', f); });
+    toast('Funds come from your Money sheet — add or change them in Centric'); });
   $$('#v-funds [data-set]').forEach(r=>r.onclick=()=>{ const t = D.settlements.find(x=>String(x.id)===r.dataset.set); if (t) openX('settle', t); });
 }
 
@@ -3148,11 +3148,11 @@ function show(v){
   $$('.tabs button').forEach(b=>b.classList.toggle('on', b.dataset.v===v)); moveBlob(true);
   $$('.view').forEach(s=>s.classList.toggle('active', s.id==='v-'+v));
   $('#title').textContent = TITLES[v];
-  $('#fab').setAttribute('aria-label', v==='funds' ? (fundSec==='settle'?'Record settlement':'Log funds') : 'Add expense');
+  $('#fab').setAttribute('aria-label', v==='funds' ? 'Record settlement' : 'Add expense');
   if (D && v==='funds') renderFunds(calc());
   window.scrollTo(0,0);
 }
-$('#fab').onclick = ()=> activeView==='funds' ? openX(fundSec==='settle' ? 'settle' : 'fund') : openX('expense');
+$('#fab').onclick = ()=> activeView==='funds' ? openX('settle') : openX('expense');   // funds are logged in Centric only
 
 /* ---------- pull to refresh ---------- */
 const PTR_ARM = 64, PTR_MAX = 96;
@@ -3386,7 +3386,7 @@ function chipIcon(f){
 }
 const xTitle = () => { const ed = !!X.rec;
   return { expense: ed ? 'Edit expense' : (isBrick() ? 'Lay bricks' : 'New expense'), fund: ed ? 'Edit funds' : 'Log funds', settle: ed ? 'Edit settlement' : 'Settlement', budget:'Edit budget', sub:'New subcategory', cat:'New category' }[X.mode]; };
-const xHint = () => ({ expense:'Saved to the Expenses tab in your Construction Budget sheet.', fund:'Saved to the Funds tab.', settle:'Money one of you paid the other to even out the split. Saved to the Settlements tab.',
+const xHint = () => ({ expense:'Saved to your Money sheet as a Construction expense, then copied to the Construction Budget sheet.', fund:'Saved to the Funds tab.', settle:'Money one of you paid the other to even out the split. Saved to the Settlements tab.',
   budget:'Changes the Budget tab line for this subcategory.', sub:'Adds a line to the Budget tab under ' + (X.rec && X.rec.category || '') + '.',
   cat:'Adds a line to the Budget tab. The amount is the budget for this line — add more subcategories from the category page.' })[X.mode];
 
@@ -3431,7 +3431,7 @@ function amtHtml(){ return X.expr ? `<b class="num">${xHasOp(X.expr) ? esc(X.exp
 function paintX(){
   const el = $('#xsheet'), ed = !!X.rec;
   const seg = !ed && (X.mode==='expense' || X.mode==='fund' || X.mode==='settle')
-    ? `<div class="seg xseg">${[['expense','Expense'],['fund','Funds'],['settle','Settle']].map(([m,l])=>`<button data-m="${m}" class="${X.mode===m?'on':''}">${l}</button>`).join('')}</div>` : '';
+    ? `<div class="seg xseg">${[['expense','Expense'],['settle','Settle']].map(([m,l])=>`<button data-m="${m}" class="${X.mode===m?'on':''}">${l}</button>`).join('')}</div>` : '';
   const chips = xChips().map(f=>{ const v = chipVal(f), ic = chipIcon(f);
     return `<button class="xfr tap xa-chip ${X.field===f?'on':''} ${ic?'':'noic'}" data-f="${f}">${ic}<span class="v">${v || ph(xLabels[f])}</span></button>`; }).join('');
   const box = (id, k, val, phv) => `<div class="xfr xa-in" data-f="${id}"><span class="k">${esc(k)}</span><span class="v"><input id="${id}" placeholder="${esc(phv)}" value="${esc(val)}" autocomplete="off"></span><button type="button" class="xa-x ${val?'show':''}" aria-label="Clear ${esc(k)}"><svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M2 2l6 6M8 2l-6 6"/></svg></button></div>`;
