@@ -2383,9 +2383,9 @@ body{background:var(--parchment);font-family:var(--font)}
 .course .cf .over{color:var(--down)}
 .course.sm .t b{font-size:15.5px}
 .hint2{margin:2px 26px 8px;font-size:12.5px;color:var(--ink-2)}
-.bk{display:flex;gap:2px;justify-content:flex-end;margin-top:5px;align-items:center}
-.bk i{width:9px;height:5px;border-radius:1.5px;display:inline-block;flex:none}
-.bk small{font-size:10px;color:var(--ink-2);margin-left:2px}
+.bkc{display:flex;gap:2px;justify-content:flex-end;margin-top:5px;align-items:center}
+.bkc i{width:9px;height:5px;border-radius:1.5px;display:inline-block;flex:none}
+.bkc small{font-size:10px;color:var(--ink-2);margin-left:2px}
 .btile{flex:0 0 42px;width:42px;height:42px;border-radius:12px;display:grid;place-items:center}
 .btile svg{width:24px;height:18px}
 .yard{display:flex;justify-content:space-around;align-items:flex-end;margin:6px 14px 0;padding:18px 8px 14px;background:var(--canvas);border:1px solid var(--card-edge);border-radius:24px;gap:8px}
@@ -2491,7 +2491,7 @@ html[data-theme=dark] .tabs button.on{color:#fff}
    Construction — budget tracker. UI is Centric's, data is the Construction
    Budget sheet (Apps Script web app).
    ========================================================================== */
-const BUILD = '2026-11-12c';          // shown in Profile, so we can tell which copy is live
+const BUILD = '2026-11-12e';          // shown in Profile, so we can tell which copy is live
 const REFRESH_MS = 2 * 60 * 1000;     // quiet refresh while the app is open
 const LS = { pass:'cbt.pass', api:'cbt.api', data:'cbt.data', synced:'cbt.synced', acct:'ct_last_account', theme:'cbt.theme' };
 
@@ -2833,7 +2833,7 @@ function brickExpRow(e){
   const meta = [e.category!==title?e.category:null, e.subcategory && e.subcategory!==title ? e.subcategory : null, e.paidBy, e.account].filter(Boolean).join(' · ');
   const q = [e.note, e.category, e.subcategory, e.account, e.paidBy, dmy(e.date)].join(' ').toLowerCase();
   return `<button class="row trow" data-exp="${e.id}" data-q="${esc(q)}">${xTile(e.category)}<div class="l"><div class="n">${esc(title)}</div><div class="m">${esc(meta)}</div></div>
-    <div class="r"><div class="v num money">${fINR(e.amount)}</div><div class="bk">${brickChips(e.amount, catColor(e.category))}</div></div></button>`;
+    <div class="r"><div class="v num money">${fINR(e.amount)}</div><div class="bkc">${brickChips(e.amount, catColor(e.category))}</div></div></button>`;
 }
 function renderExp(m){
   const list = D.expenses.filter(e=>expWho==='all' || e.paidBy===expWho)
@@ -2911,7 +2911,7 @@ function brickFunds(m){
       : (group(sets, sRow) || '<div class="empty">No settlements yet — tap + to record one</div>')}`;
   $$('#fundSeg button').forEach(b=>b.onclick=()=>{ fundSec = b.dataset.s; renderFunds(calc()); });
   $$('#v-funds [data-fund]').forEach(r=>r.onclick=()=>{ const f = D.funds.find(x=>String(x.id)===r.dataset.fund); if (!f) return;
-    toast('Funds come from your Money sheet — add or change them in Centric'); });
+    viewFund(f); });
   $$('#v-funds [data-set]').forEach(r=>r.onclick=()=>{ const t = D.settlements.find(x=>String(x.id)===r.dataset.set); if (t) openX('settle', t); });
 }
 
@@ -3019,7 +3019,7 @@ function ogFunds(m){
       ${group(sets, sRow) || '<div class="empty">No settlements yet — tap + to record one</div>'}`}`;
   $$('#fundSeg button').forEach(b=>b.onclick=()=>{ fundSec = b.dataset.s; renderFunds(calc()); window.scrollTo(0,0); });
   $$('#v-funds [data-fund]').forEach(r=>r.onclick=()=>{ const f = D.funds.find(x=>String(x.id)===r.dataset.fund); if (!f) return;
-    toast('Funds come from your Money sheet — add or change them in Centric'); });
+    viewFund(f); });
   $$('#v-funds [data-set]').forEach(r=>r.onclick=()=>{ const t = D.settlements.find(x=>String(x.id)===r.dataset.set); if (t) openX('settle', t); });
 }
 
@@ -3338,6 +3338,20 @@ function openX(mode, rec){
   if (mode==='budget' || mode==='sub' || mode==='cat') X.field = 'amount';
   if (X.expr) X.fresh = true;
   paintX();
+  $('#backdrop').hidden = false; $('#xsheet').hidden = false;
+  requestAnimationFrame(()=>{ $('#backdrop').classList.add('show'); $('#xsheet').classList.add('show'); });
+}
+// Funds are read-only here (they're logged in Centric): tapping one shows its details
+function viewFund(f){
+  X = { mode:'view', rec:f, field:null };
+  const kv = (k, v) => `<div class="xfr xa-in xa-ro"><span class="k">${esc(k)}</span><span class="v">${esc(v)}</span></div>`;
+  const neg = f.amount < 0;
+  $('#xsheet').innerHTML = `<div class="grab"></div><div class="xhd"><h3>Funds entry</h3><button data-close>Close</button></div>
+    <div class="xscroll"><div class="xa"><div class="xfr xa-amt"><span class="v"><b class="${neg?'down':''}">${neg?'−':'+'}${fINR(Math.abs(f.amount))}</b></span></div>
+      ${isBrick() ? `<div class="xbricks">${bN(Math.abs(f.amount))} bricks</div>` : ''}
+      <div class="xa-ins">${kv('Who', f.person)}${kv('Date', dayHd(f.date))}${kv('Note', f.note || (neg ? 'Funds out' : 'Funds in'))}${kv('Source', f.linked ? 'Money sheet' : 'Logged in the sheet')}</div></div>
+      <p class="hint">Funds are read-only here. To change or delete this entry, do it in Centric.</p></div>`;
+  $('[data-close]', $('#xsheet')).onclick = closeX;
   $('#backdrop').hidden = false; $('#xsheet').hidden = false;
   requestAnimationFrame(()=>{ $('#backdrop').classList.add('show'); $('#xsheet').classList.add('show'); });
 }
