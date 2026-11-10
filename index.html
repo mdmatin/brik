@@ -2491,7 +2491,7 @@ html[data-theme=dark] .tabs button.on{color:#fff}
    Construction — budget tracker. UI is Centric's, data is the Construction
    Budget sheet (Apps Script web app).
    ========================================================================== */
-const BUILD = '2026-11-12e';          // shown in Profile, so we can tell which copy is live
+const BUILD = '2026-11-12f';          // shown in Profile, so we can tell which copy is live
 const REFRESH_MS = 2 * 60 * 1000;     // quiet refresh while the app is open
 const LS = { pass:'cbt.pass', api:'cbt.api', data:'cbt.data', synced:'cbt.synced', acct:'ct_last_account', theme:'cbt.theme' };
 
@@ -3470,7 +3470,7 @@ function paintX(){
       <div class="xa"><div class="xfr tap xa-amt ${X.field==='amount'?'on':''}" data-f="amount"><span class="v">${amtHtml()}</span></div>
         ${X.mode==='expense' && isBrick() ? `<div class="xbricks" id="xBricks">${xBrickHtml()}</div>` : ''}
         ${dateRow}<div class="xa-chips">${chips}</div><div class="xa-ins">${boxes}</div></div>
-      <button class="btn" data-save>${X.mode==='budget' ? 'Save budget' : X.mode==='sub' ? 'Add subcategory' : X.mode==='cat' ? 'Add category' : X.mode==='expense' && !ed && isBrick() && xAmt()>0 ? 'Lay ' + bN(xAmt()) + (bricks(xAmt())===1?' brick':' bricks') : 'Save'}</button>
+      <button class="btn" data-save>${X.mode==='budget' ? 'Save budget' : X.mode==='sub' ? 'Add subcategory' : X.mode==='cat' ? 'Add category' : 'Save'}</button>
       ${ed && (X.mode==='expense' || X.mode==='fund' || X.mode==='settle') ? '<button class="btn danger" data-del>Delete</button>' : ''}
       <p class="hint">${esc(xHint())}</p></div>${xPanel()}`;
   wireX(el);
@@ -3503,8 +3503,7 @@ function wireX(el){
   const hide = $('[data-hide]', el); if (hide) hide.onclick = ()=>{ grab(); X.field = null; paintX(); };
   $$('.xkp button', el).forEach(b=>b.onclick=()=>{ const k = b.dataset.k;
     if (k==='OK'){ if (xHasOp(X.expr)) X.expr = String(xAmt()); grab(); xNext(); return; }
-    xKey(k); const v = $('.xa-amt .v', el); if (v) v.innerHTML = amtHtml(); const xb = $('#xBricks', el); if (xb) xb.innerHTML = xBrickHtml();
-    const sv = $('[data-save]', el); if (sv && X.mode==='expense' && !X.rec && isBrick()) sv.textContent = xAmt()>0 ? 'Lay ' + bN(xAmt()) + (bricks(xAmt())===1?' brick':' bricks') : 'Save'; });
+    xKey(k); const v = $('.xa-amt .v', el); if (v) v.innerHTML = amtHtml(); const xb = $('#xBricks', el); if (xb) xb.innerHTML = xBrickHtml(); });
   $$('.xgrid [data-c]', el).forEach(b=>b.onclick=()=>{ grab(); const c = b.dataset.c;
     if (X.cat!==c){ X.cat = c; X.sub = ''; }
     if (subsOf(c).length && X.openCat!==c){ X.openCat = c; paintX(); const sr = $('#xsheet .xsubrow'); if (sr) sr.scrollIntoView({ block:'nearest', behavior:'smooth' }); return; }
