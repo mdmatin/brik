@@ -2488,7 +2488,7 @@ html[data-theme=dark] .tabs button.on{color:#fff}
    Construction — budget tracker. UI is Centric's, data is the Construction
    Budget sheet (Apps Script web app).
    ========================================================================== */
-const BUILD = '2026-11-11c';          // shown in Profile, so we can tell which copy is live
+const BUILD = '2026-11-11d';          // shown in Profile, so we can tell which copy is live
 const REFRESH_MS = 2 * 60 * 1000;     // quiet refresh while the app is open
 const LS = { pass:'cbt.pass', api:'cbt.api', data:'cbt.data', synced:'cbt.synced', acct:'ct_last_account', theme:'cbt.theme' };
 
@@ -2861,7 +2861,7 @@ function applySearch(){
 }
 
 /* ---------- Cash in hand: as on the sheet's Summary tab — funds logged minus what was paid out, per person and in total ---------- */
-const inHand = p => p.funds - p.paid;
+const inHand = p => p.cash;   // as the Summary tab: funds in − paid out ± settlements
 function ogStandHtml(m){
   const tot = m.people.reduce((s,p)=>s+inHand(p),0), need = m.people.reduce((s,p)=>s+Math.max(0,p.gap),0);
   // both tabs draw the same way: person, a bar, the amount and a line under it
@@ -3329,7 +3329,8 @@ function openX(mode, rec){
     expr: rec && rec.amount ? String(rec.amount) : rec && mode==='budget' ? String(rec.budgeted||'') : '',
     date: rec && rec.date || todayISO(), cat: rec && rec.category || '', sub: rec && rec.subcategory || '',
     acct: rec ? (rec.account || '') : acct, who: rec && rec.paidBy || A, person: rec && rec.person || A,
-    from: rec && rec.from || B, to: rec && rec.to || A, note: rec && rec.note || '', name: '', subName: '' };
+    from: rec && rec.from || B, to: rec && rec.to || A, note: rec && rec.note || '', name: '', subName: '',
+    facc: rec && /→/.test(rec.mode||'') ? String(rec.mode).split('→')[0].trim() : '', tacc: rec && /→/.test(rec.mode||'') ? String(rec.mode).split('→')[1].trim() : '' };
   if (mode==='expense' && !rec) X.field = 'amount';
   if (mode==='budget' || mode==='sub' || mode==='cat') X.field = 'amount';
   if (X.expr) X.fresh = true;
@@ -3372,21 +3373,23 @@ const xDateLabel = () => { const t = todayISO(), y = new Date(Date.now()-864e5-n
 const ph = t => `<span class="ph">${esc(t)}</span>`;
 
 // which pick-chips each mode shows, in order (the keypad is always first)
-const xChips = () => ({ expense:['category','account','who'], fund:['person'], settle:['from','to'], budget:[], sub:[], cat:[] })[X.mode];
-const xLabels = { category:'Category', account:'Account', who:'Paid by', person:'Who', from:'From', to:'To' };
+const xChips = () => ({ expense:['category','account','who'], fund:['person'], settle:['from','to','facc','tacc'], budget:[], sub:[], cat:[] })[X.mode];
+const xLabels = { category:'Category', account:'Account', who:'Paid by', person:'Who', from:'From', to:'To', facc:'From account', tacc:'To account' };
 function chipVal(f){
   if (f==='category') return X.cat ? esc(X.cat + (X.sub ? ' › ' + X.sub : '')) : '';
   if (f==='account') return X.acct ? esc(X.acct) : '';
+  if (f==='facc' || f==='tacc') return X[f] ? esc(X[f]) : '';
   return esc({ who:X.who, person:X.person, from:X.from, to:X.to }[f] || '');
 }
 function chipIcon(f){
   if (f==='category') return X.cat ? xTile(X.cat) : '';
   if (f==='account') return X.acct ? accMark(X.acct) : '';
+  if (f==='facc' || f==='tacc') return X[f] ? accMark(X[f]) : '';
   const n = { who:X.who, person:X.person, from:X.from, to:X.to }[f]; return n ? personMark(n) : '';
 }
 const xTitle = () => { const ed = !!X.rec;
   return { expense: ed ? 'Edit expense' : (isBrick() ? 'Lay bricks' : 'New expense'), fund: ed ? 'Edit funds' : 'Log funds', settle: ed ? 'Edit settlement' : 'Settlement', budget:'Edit budget', sub:'New subcategory', cat:'New category' }[X.mode]; };
-const xHint = () => ({ expense:'Saved to your Money sheet as a Construction expense, then copied to the Construction Budget sheet.', fund:'Saved to the Funds tab.', settle:'Money one of you paid the other to even out the split. Saved to the Settlements tab.',
+const xHint = () => ({ expense:'Saved to your Money sheet as a Construction expense, then copied to the Construction Budget sheet.', fund:'Saved to the Funds tab.', settle:'Money one of you paid the other to even out the split. Saved to the Settlements tab; with both accounts picked, also logged as a transfer in Money.',
   budget:'Changes the Budget tab line for this subcategory.', sub:'Adds a line to the Budget tab under ' + (X.rec && X.rec.category || '') + '.',
   cat:'Adds a line to the Budget tab. The amount is the budget for this line — add more subcategories from the category page.' })[X.mode];
 
@@ -3397,6 +3400,11 @@ function xPanel(){
   else if (f==='category') body = xCatGrid();
   else if (f==='account') body = `<div class="xacc"><div class="xgrid pills">${accountList().map(a=>`<button class="${a===X.acct?'on':''}" data-a="${esc(a)}">${accMark(a)}<span>${esc(a)}</span></button>`).join('')}</div>
     ${accountList().length ? '' : '<div class="empty">Add accounts on the sheet’s Config tab</div>'}</div>`;
+  else if (f==='facc' || f==='tacc'){   // a settlement's accounts: the payer's and the receiver's, or none if no money moved between accounts
+    const who = f==='facc' ? X.from : X.to, list = accountList().filter(a=>accOwner(a)===who);
+    body = `<div class="xacc"><div class="xgrid pills">${list.map(a=>`<button class="${a===X[f]?'on':''}" data-sa="${esc(a)}">${accMark(a)}<span>${esc(a)}</span></button>`).join('')}
+      <button class="${!X[f]?'on':''}" data-sa=""><span>No transfer</span></button></div>
+      <p class="hint" style="margin:8px 2px 0">Pick both accounts to also log a transfer in Money. Leave them empty if you just squared up.</p></div>`; }
   else { const cur = { who:X.who, person:X.person, from:X.from, to:X.to }[f];
     const opts = [D.config.person_a, D.config.person_b].filter(n => f!=='to' || n!==X.from);
     body = `<div class="xacc"><div class="xgrid pills">${opts.map(n=>`<button class="${n===cur?'on':''}" data-p="${esc(n)}">${personMark(n)}<span>${esc(n)}</span></button>`).join('')}</div></div>`; }
@@ -3482,9 +3490,11 @@ function wireX(el){
     if (subsOf(c).length && X.openCat!==c){ X.openCat = c; paintX(); const sr = $('#xsheet .xsubrow'); if (sr) sr.scrollIntoView({ block:'nearest', behavior:'smooth' }); return; }
     X.openCat = ''; xNext(); });
   $$('.xgrid [data-sub]', el).forEach(b=>b.onclick=()=>{ grab(); X.sub = b.dataset.sub; X.cat = X.openCat || X.cat; X.openCat=''; xNext(); });
+  $$('.xgrid [data-sa]', el).forEach(b=>b.onclick=()=>{ grab(); X[X.field] = b.dataset.sa; xNext(); });
   $$('.xgrid [data-a]', el).forEach(b=>b.onclick=()=>{ grab(); X.acct = b.dataset.a; X.who = accOwner(X.acct); xNext(); });   // Paid by follows the account
   $$('.xgrid [data-p]', el).forEach(b=>b.onclick=()=>{ grab(); const f = X.field, v = b.dataset.p;
     if (f==='who') X.who = v; else if (f==='person') X.person = v; else if (f==='from'){ X.from = v; if (X.to===v) X.to = [D.config.person_a, D.config.person_b].find(n=>n!==v); } else X.to = v;
+    if (X.facc && accOwner(X.facc)!==X.from) X.facc = ''; if (X.tacc && accOwner(X.tacc)!==X.to) X.tacc = '';
     xNext(); });
   $('[data-save]', el).onclick = saveX;
   const del = $('[data-del]', el); if (del) del.onclick = async ()=>{
@@ -3517,7 +3527,10 @@ async function saveX(){
   if (m==='fund'){ const p = { date:X.date, person:X.person, amount:amt, note:X.note.trim() };
     return was ? post('updateFund', Object.assign(p, was), 'Funds entry updated') : post('addFund', p, 'Funds logged'); }
   if (m==='settle'){ if (X.from===X.to) return fail('From and To must be different');
-    const p = { date:X.date, from:X.from, to:X.to, amount:amt, mode: X.rec && X.rec.mode || '', note:X.note.trim() };
+    if (!!X.facc !== !!X.tacc) return fail('Pick both accounts, or neither if no money moved between accounts');
+    if (X.facc && accOwner(X.facc)!==X.from) return fail(`${X.facc} is ${accOwner(X.facc)}'s account — it can't be ${X.from}'s`);
+    if (X.tacc && accOwner(X.tacc)!==X.to) return fail(`${X.tacc} is ${accOwner(X.tacc)}'s account — it can't be ${X.to}'s`);
+    const p = { date:X.date, from:X.from, to:X.to, amount:amt, mode: X.rec && !/→/.test(X.rec.mode||'') ? X.rec.mode : '', note:X.note.trim(), fromAccount:X.facc, toAccount:X.tacc };
     return was ? post('updateSettlement', Object.assign(p, was), 'Settlement updated') : post('addSettlement', p, 'Settlement recorded'); }
 }
 async function post(action, payload, okMsg, force){
