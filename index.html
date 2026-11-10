@@ -2488,7 +2488,7 @@ html[data-theme=dark] .tabs button.on{color:#fff}
    Construction — budget tracker. UI is Centric's, data is the Construction
    Budget sheet (Apps Script web app).
    ========================================================================== */
-const BUILD = '2026-11-11b';          // shown in Profile, so we can tell which copy is live
+const BUILD = '2026-11-11c';          // shown in Profile, so we can tell which copy is live
 const REFRESH_MS = 2 * 60 * 1000;     // quiet refresh while the app is open
 const LS = { pass:'cbt.pass', api:'cbt.api', data:'cbt.data', synced:'cbt.synced', acct:'ct_last_account', theme:'cbt.theme' };
 
@@ -3453,7 +3453,8 @@ function paintX(){
 }
 function grab(){ const n = $('#xNote'), nm = $('#xName'), sn = $('#xSubName'), d = $('#xDate'); if (n) X.note = n.value; if (nm) X.name = nm.value; if (sn) X.subName = sn.value; if (d) X.date = d.value || X.date; }
 // whose money an account is: the second funder's accounts carry their name (Halim · C); every other account is person A's
-const accOwner = a => { const B = D.config.person_b || ''; return B && new RegExp('^\\s*' + B.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + '\\b', 'i').test(a || '') ? B : D.config.person_a; };
+const accOwner = a => { const own = D.config.owners || {}; if (own[a]) return own[a];   // Money › Accounts › Owner
+  const B = D.config.person_b || ''; return B && new RegExp('^\\s*' + B.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + '\\b', 'i').test(a || '') ? B : D.config.person_a; };
 function xNext(){
   const order = ['amount', ...xChips()];
   const i = order.indexOf(X.field);
