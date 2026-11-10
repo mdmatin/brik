@@ -1626,7 +1626,7 @@ html[data-theme=dark] .tabs button.on{color:#fff}
    Construction — budget tracker. UI is Centric's, data is the Construction
    Budget sheet (Apps Script web app).
    ========================================================================== */
-const BUILD = '2026-11-10a';          // shown in Profile, so we can tell which copy is live
+const BUILD = '2026-11-10b';          // shown in Profile, so we can tell which copy is live
 const REFRESH_MS = 2 * 60 * 1000;     // quiet refresh while the app is open
 const LS = { pass:'cbt.pass', api:'cbt.api', data:'cbt.data', synced:'cbt.synced', acct:'ct_last_account', theme:'cbt.theme' };
 
@@ -1666,15 +1666,15 @@ const chev = d => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
 const CHV = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>';
 const XI = {
   build:'M5 5h14a1.6 1.6 0 0 1 1.6 1.6v10.8A1.6 1.6 0 0 1 19 19H5a1.6 1.6 0 0 1-1.6-1.6V6.6A1.6 1.6 0 0 1 5 5zM3.4 9.7h17.2M3.4 14.3h17.2M9 5v4.7M15 5v4.7M12 9.7v4.6M6.6 14.3V19M17.4 14.3V19',
-  pipe: 'M4 9h7a3 3 0 0 1 3 3v8M4 6v6M14 20h4M16 3.5c1.5 1.8 2.5 3.1 2.5 4.3a2.5 2.5 0 0 1-5 0c0-1.2 1-2.5 2.5-4.3z',
-  bolt: 'M13 2.5 4.5 14h7l-1 7.5 8.5-11.5h-7z',
-  brush:'M14.5 4.5l5 5-7.5 7.5-5-5zM7 12l-2.5 2.5a2.4 2.4 0 0 0 0 3.4l1.6 1.6a2.4 2.4 0 0 0 3.4 0L12 17M17 7l2.5-2.5',
-  floor:'M4 4h16v16H4zM4 12h16M12 4v16M8 4v8M16 12v8',
+  pipe: 'M14.7 6.3a4 4 0 0 0-5.4 5.4L3.5 17.5l3 3 5.8-5.8a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.3-.6-.6-2.3z',
+  bolt: 'M9 3v5M15 3v5M6 8h12v3a6 6 0 0 1-12 0zM12 17v4',
+  brush:'M4 4h13v5H4zM17 6.5h2.5V12H11v3M10 15h2v6h-2z',
+  floor:'M3 6h8v4H3zM13 6h8v4h-8zM3 14h5v4H3zM10 14h11v4H10z',
   user: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4.5 20.5c1.2-3.6 4-5.5 7.5-5.5s6.3 1.9 7.5 5.5',
-  saw:  'M3 15l11-11 3 3-11 11zM14 4l6 6M9 9l2 2M6.5 11.5l2 2',
-  door: 'M6 21V4h12v17M3 21h18M14.5 12.5h.01',
-  win:  'M4 4h16v16H4zM12 4v16M4 12h16',
-  more: 'M6 12h.01M12 12h.01M18 12h.01'
+  saw:  'M14 6.5l-9.5 9.5 3 3L17 9.5M12 4.5l3-1 5.5 5.5-1 3z',
+  door: 'M4 21h16M6 21V4h8v17M14 5l5 2v14M11.5 13h.01',
+  win:  'M5 21V10a7 7 0 0 1 14 0v11zM12 3v18M5 14h14',
+  more: 'M3.5 8L12 4l8.5 4v8L12 20l-8.5-4zM3.5 8L12 12l8.5-4M12 12v8'
 };
 const XMAP = [[/civil|structur|masonry|concrete/i,'build','mf'],[/plumb|water|sanit/i,'pipe','lq'],[/electr|wire|light/i,'bolt','gd'],
   [/paint|putty/i,'brush','pk'],[/floor|tile|marble/i,'floor','bu'],[/consult|architect|\bar\b|mep|design/i,'user','us'],
@@ -2052,7 +2052,7 @@ function wireGo(root){ $$('[data-go]', root).forEach(b=>b.onclick=()=>{ if (b.da
    ========================================================================== */
 function ogTile(cat){
   const m = XMAP.find(([re])=>re.test(cat||'')) || [0,'build','in'];
-  return `<div class="tile ${m[2]}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${m[1]==='more'?3:1.7}" stroke-linecap="round" stroke-linejoin="round"><path d="${XI[m[1]]}"/></svg></div>`;
+  return `<div class="tile ${m[2]}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="${XI[m[1]]}"/></svg></div>`;
 }
 /* ---------- Overview ---------- */
 function ogHome(m){
