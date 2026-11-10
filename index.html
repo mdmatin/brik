@@ -2427,6 +2427,8 @@ html[data-theme=dark] .tabs button.on{color:#fff}
 
 .course .t span em.down{color:var(--down)}
 .stand .course + .rowtotal{border-top:1px solid var(--hairline)}
+/* selected picker tile: warm tint, not Centric's blue */
+.xgrid.pills > button.on,.xgrid.tiles > button.on,.xpb > .xgrid.tiles > button.on{background:color-mix(in srgb,var(--or) 9%,var(--canvas));box-shadow:inset 0 0 0 2px var(--or);color:var(--or)}
 </style>
 <script>try{if(localStorage.getItem("cbt.skin")==="og")document.getElementById("skinBrick").disabled=true}catch(e){}</script>
 </head>
@@ -2489,7 +2491,7 @@ html[data-theme=dark] .tabs button.on{color:#fff}
    Construction — budget tracker. UI is Centric's, data is the Construction
    Budget sheet (Apps Script web app).
    ========================================================================== */
-const BUILD = '2026-11-12a';          // shown in Profile, so we can tell which copy is live
+const BUILD = '2026-11-12b';          // shown in Profile, so we can tell which copy is live
 const REFRESH_MS = 2 * 60 * 1000;     // quiet refresh while the app is open
 const LS = { pass:'cbt.pass', api:'cbt.api', data:'cbt.data', synced:'cbt.synced', acct:'ct_last_account', theme:'cbt.theme' };
 
@@ -2661,7 +2663,7 @@ const SKIN = {
 };
 const TITLES = { ...SKIN[skin].titles };
 const isBrick = () => skin === 'brick';
-function xTile(cat){ return isBrick() ? brickTile(cat) : ogTile(cat); }
+function xTile(cat){ return ogTile(cat); }   // same category icons in both looks
 function expRow(e){ return isBrick() ? brickExpRow(e) : ogExpRow(e); }
 function catBody(cat){ return isBrick() ? brickCatBody(cat) : ogCatBody(cat); }
 function renderHome(m){ return isBrick() ? brickHome(m) : ogHome(m); }
@@ -3458,6 +3460,9 @@ function paintX(){
       ${ed && (X.mode==='expense' || X.mode==='fund' || X.mode==='settle') ? '<button class="btn danger" data-del>Delete</button>' : ''}
       <p class="hint">${esc(xHint())}</p></div>${xPanel()}`;
   wireX(el);
+  // a picker panel open: keep Save in view above it
+  const sc = $('.xscroll', el), sv = $('[data-save]', el);
+  if (X.field && sc && sv){ const d = sv.getBoundingClientRect().bottom - sc.getBoundingClientRect().bottom; if (d > 0) sc.scrollTop += d + 10; }
   const t = $('.xa-amt .v b', el); if (t) t.classList.toggle('xfresh', X.fresh && !!X.expr);
 }
 function grab(){ const n = $('#xNote'), nm = $('#xName'), sn = $('#xSubName'), d = $('#xDate'); if (n) X.note = n.value; if (nm) X.name = nm.value; if (sn) X.subName = sn.value; if (d) X.date = d.value || X.date; }
