@@ -2488,7 +2488,7 @@ html[data-theme=dark] .tabs button.on{color:#fff}
    Construction — budget tracker. UI is Centric's, data is the Construction
    Budget sheet (Apps Script web app).
    ========================================================================== */
-const BUILD = '2026-11-11a';          // shown in Profile, so we can tell which copy is live
+const BUILD = '2026-11-11b';          // shown in Profile, so we can tell which copy is live
 const REFRESH_MS = 2 * 60 * 1000;     // quiet refresh while the app is open
 const LS = { pass:'cbt.pass', api:'cbt.api', data:'cbt.data', synced:'cbt.synced', acct:'ct_last_account', theme:'cbt.theme' };
 
@@ -3452,6 +3452,8 @@ function paintX(){
   const t = $('.xa-amt .v b', el); if (t) t.classList.toggle('xfresh', X.fresh && !!X.expr);
 }
 function grab(){ const n = $('#xNote'), nm = $('#xName'), sn = $('#xSubName'), d = $('#xDate'); if (n) X.note = n.value; if (nm) X.name = nm.value; if (sn) X.subName = sn.value; if (d) X.date = d.value || X.date; }
+// whose money an account is: the second funder's accounts carry their name (Halim · C); every other account is person A's
+const accOwner = a => { const B = D.config.person_b || ''; return B && new RegExp('^\\s*' + B.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + '\\b', 'i').test(a || '') ? B : D.config.person_a; };
 function xNext(){
   const order = ['amount', ...xChips()];
   const i = order.indexOf(X.field);
@@ -3479,7 +3481,7 @@ function wireX(el){
     if (subsOf(c).length && X.openCat!==c){ X.openCat = c; paintX(); const sr = $('#xsheet .xsubrow'); if (sr) sr.scrollIntoView({ block:'nearest', behavior:'smooth' }); return; }
     X.openCat = ''; xNext(); });
   $$('.xgrid [data-sub]', el).forEach(b=>b.onclick=()=>{ grab(); X.sub = b.dataset.sub; X.cat = X.openCat || X.cat; X.openCat=''; xNext(); });
-  $$('.xgrid [data-a]', el).forEach(b=>b.onclick=()=>{ grab(); X.acct = b.dataset.a; xNext(); });
+  $$('.xgrid [data-a]', el).forEach(b=>b.onclick=()=>{ grab(); X.acct = b.dataset.a; X.who = accOwner(X.acct); xNext(); });   // Paid by follows the account
   $$('.xgrid [data-p]', el).forEach(b=>b.onclick=()=>{ grab(); const f = X.field, v = b.dataset.p;
     if (f==='who') X.who = v; else if (f==='person') X.person = v; else if (f==='from'){ X.from = v; if (X.to===v) X.to = [D.config.person_a, D.config.person_b].find(n=>n!==v); } else X.to = v;
     xNext(); });
@@ -3504,6 +3506,7 @@ async function saveX(){
   if (!(amt > 0)) return fail('Enter an amount');
   if (m==='expense'){
     if (!X.cat) return fail('Pick a category');
+    if (X.acct && X.who !== accOwner(X.acct)) return fail(`${X.acct} is ${accOwner(X.acct)}'s account — Paid by must be ${accOwner(X.acct)}`);
     const p = { date:X.date, account:X.acct, category:X.cat, subcategory:X.sub, note:X.note.trim(), amount:amt, paidBy:X.who };
     if (X.rec){ p.id = X.rec.id; p.was = { date:X.rec.date, amount:X.rec.amount }; return post('updateExpense', p, 'Expense updated'); }
     if (X.acct) lsSet(LS.acct, X.acct);
