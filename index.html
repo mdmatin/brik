@@ -2430,6 +2430,9 @@ html[data-theme=dark] .tabs button.on{color:#fff}
 /* selected picker tile: warm tint, not Centric's blue */
 .xgrid.pills > button.on,.xgrid.tiles > button.on,.xpb > .xgrid.tiles > button.on{background:color-mix(in srgb,var(--or) 9%,var(--canvas));box-shadow:inset 0 0 0 2px var(--or);color:var(--or)}
 html[data-theme=dark] .xgrid > button.on,html[data-theme=dark] .xgrid.tiles > button.on,html[data-theme=dark] .xgrid.pills > button.on,html[data-theme=dark] .xpb > .xgrid.tiles > button.on{background:color-mix(in srgb,var(--or) 16%,var(--canvas))}
+html[data-theme=dark] .seg button.on{background:var(--tabon);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.4)}
+.xkp button.op{background:color-mix(in srgb,var(--or) 12%,var(--canvas))}
+html[data-theme=dark] .xkp button.op{background:color-mix(in srgb,var(--or) 18%,var(--canvas))}
 </style>
 <script>try{if(localStorage.getItem("cbt.skin")==="og")document.getElementById("skinBrick").disabled=true}catch(e){}</script>
 </head>
@@ -2492,7 +2495,7 @@ html[data-theme=dark] .xgrid > button.on,html[data-theme=dark] .xgrid.tiles > bu
    Construction — budget tracker. UI is Centric's, data is the Construction
    Budget sheet (Apps Script web app).
    ========================================================================== */
-const BUILD = '2026-11-12g';          // shown in Profile, so we can tell which copy is live
+const BUILD = '2026-11-12h';          // shown in Profile, so we can tell which copy is live
 const REFRESH_MS = 2 * 60 * 1000;     // quiet refresh while the app is open
 const LS = { pass:'cbt.pass', api:'cbt.api', data:'cbt.data', synced:'cbt.synced', acct:'ct_last_account', theme:'cbt.theme' };
 
