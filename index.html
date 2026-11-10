@@ -2433,6 +2433,18 @@ html[data-theme=dark] .xgrid > button.on,html[data-theme=dark] .xgrid.tiles > bu
 html[data-theme=dark] .seg button.on{background:var(--tabon);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.4)}
 .xkp button.op{background:color-mix(in srgb,var(--or) 12%,var(--canvas))}
 html[data-theme=dark] .xkp button.op{background:color-mix(in srgb,var(--or) 18%,var(--canvas))}
+/* warm sweep: Centric greys and blues the Brick look still inherited */
+.xfresh{background:color-mix(in srgb,var(--or) 18%,transparent);box-shadow:0 0 0 3px color-mix(in srgb,var(--or) 18%,transparent)}
+html[data-theme=dark] .xfresh{background:color-mix(in srgb,var(--or) 30%,transparent);box-shadow:0 0 0 3px color-mix(in srgb,var(--or) 30%,transparent)}
+.xa-x{background:var(--ink-3)}
+html[data-theme=dark] .xa-x{background:var(--ink-3)}
+html[data-theme=dark] .prof .seg2 button.on{background:var(--tabon)}
+.prof select{background:var(--sunken);color:var(--ink)}
+#ptr{background:var(--canvas);color:var(--ink-2)}
+#ptr.armed,#ptr.spin{color:var(--or)}
+html[data-theme=dark] #btnMore.avatar{background:var(--sunken)}
+html[data-theme=dark] .xa-date input{background:transparent}
+html[data-theme=dark] #ptr{background:var(--sunken)}
 </style>
 <script>try{if(localStorage.getItem("cbt.skin")==="og")document.getElementById("skinBrick").disabled=true}catch(e){}</script>
 </head>
@@ -2495,7 +2507,7 @@ html[data-theme=dark] .xkp button.op{background:color-mix(in srgb,var(--or) 18%,
    Construction — budget tracker. UI is Centric's, data is the Construction
    Budget sheet (Apps Script web app).
    ========================================================================== */
-const BUILD = '2026-11-12h';          // shown in Profile, so we can tell which copy is live
+const BUILD = '2026-11-12i';          // shown in Profile, so we can tell which copy is live
 const REFRESH_MS = 2 * 60 * 1000;     // quiet refresh while the app is open
 const LS = { pass:'cbt.pass', api:'cbt.api', data:'cbt.data', synced:'cbt.synced', acct:'ct_last_account', theme:'cbt.theme' };
 
@@ -3272,7 +3284,8 @@ const PI = {
   home:'<path d="M3 11l9-8 9 8v9a2 2 0 0 1-2 2h-4v-7H9v7H5a2 2 0 0 1-2-2z"/>'
 };
 function profileBody(){
-  const pic = (k,c)=>`<span class="ic" style="background:${c}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${PI[k]}</svg></span>`;
+  const WARM = { '#636366':'#7d6b5e', '#5856d6':'#8a5a3c', '#ff9500':'#d99a2b', '#007aff':'#e2572b', '#ff2d55':'#c23b33', '#34c759':'#4f7a3a', '#0f9d58':'#4f7a3a', '#8e8e93':'#a8988a' };
+  const pic = (k,c)=>`<span class="ic" style="background:${isBrick() && WARM[c] || c}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${PI[k]}</svg></span>`;
   const row = (i,c,l,right,sub,attr='')=>`<div class="r" ${attr}>${pic(i,c)}<div class="lb">${l}${sub?`<small>${sub}</small>`:''}</div>${right}</div>`;
   const th = window.themePick ? themePick() : 'auto', c = (D && D.config) || {};
   const synced = syncedAt() ? 'synced ' + ago(Date.now()-syncedAt()) : 'not synced yet';
