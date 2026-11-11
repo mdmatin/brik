@@ -2523,7 +2523,7 @@ html[data-theme=dark] #ptr{background:var(--sunken)}
    Construction — budget tracker. UI is Centric's, data is the Construction
    Budget sheet (Apps Script web app).
    ========================================================================== */
-const BUILD = '2026-11-12j';          // shown in Profile, so we can tell which copy is live
+const BUILD = '2026-11-12k';          // shown in Profile, so we can tell which copy is live
 const REFRESH_MS = 2 * 60 * 1000;     // quiet refresh while the app is open
 const LS = { pass:'cbt.pass', api:'cbt.api', data:'cbt.data', synced:'cbt.synced', acct:'ct_last_account', theme:'cbt.theme' };
 
@@ -3628,7 +3628,7 @@ function qDone(op, d){
 }
 function qVerifyLoaded(){
   if (!qCheck) return;
-  qCheck.forEach(op=>{ if (!qDone(op, SRV)) qFails.push({ ...op, error:'the app closed before the sheet confirmed it', code:'unconfirmed' }); });
+  qCheck.forEach(op=>{ if (!qDone(op, SRV)) qFails.push({ ...op, lost:true, error:'the app closed before the sheet confirmed it', code:'unconfirmed' }); });
   qCheck = null; qSave(); qPaint();
 }
 function post(action, payload, okMsg, force){
@@ -3650,15 +3650,26 @@ async function qRun(){
         if (!r) throw Object.assign(new Error('that entry changed in the sheet'), { code:'stale' });
         p.id = r.id; p.was = { date:r.date, amount:r.amount };
       }
+      op.sent = true; qSave();
       j = await apiPost(op.action, p, op.force);
     }catch(e){ err = e.code ? e : Object.assign(new Error('could not reach the sheet — check your connection'), { code:'network' }); }
+    // the reply was lost (often iOS cutting the request when the app goes to the background) but the
+    // sheet may well have saved it: look before calling it a failure. Saves take ~30 s, so look a few times.
+    if (err && err.code==='network' && op.sent){
+      for (let t = 0; t < 5 && err; t++){
+        await new Promise(r=>setTimeout(r, t ? 10000 : 3000));
+        try{ const fresh = await apiGet(); if (qDone(op, fresh)){ j = { ok:true, data:fresh }; err = null; } else setData(fresh); }catch(e){}
+      }
+    }
+    // a retry of something whose reply was lost: "already in the sheet" means the first try got there
+    if (!err && j && !j.ok && j.error==='duplicate' && op.lost){ try{ j = { ok:true, data: await apiGet() }; }catch(e){} }
     if (!err && j && !j.ok){
       if (j.error==='bad_passcode'){ Q = []; qSave(); qBusy = false; lsDel(LS.pass); showSetup('Your saved passcode no longer works.'); return; }
       err = Object.assign(new Error(j.error==='duplicate' ? 'an identical entry is already in the sheet' : j.error==='stale' ? 'that entry changed in the sheet' :
         j.error==='unknown_action' ? 'the sheet script needs updating to allow this' : String(j.error || 'the sheet refused it')), { code:j.error || 'server' });
     }
     Q.shift();
-    if (err){ qFails.push({ ...op, error:err.message, code:err.code || '' }); qSave(); qRebuild(); render(); qPaint(); try{ navigator.vibrate && navigator.vibrate([30,60,30]); }catch(e){} }
+    if (err){ if (err.code==='network' || err.code==='unconfirmed') op.lost = true; qFails.push({ ...op, error:err.message, code:err.code || '' }); qSave(); qRebuild(); render(); qPaint(); try{ navigator.vibrate && navigator.vibrate([30,60,30]); }catch(e){} }
     else { qSave(); setData(j.data); render(); toast(op.okMsg); setStatus('Updated just now',''); qPaint(); }
   }
   qBusy = false; qPaint();
@@ -3667,6 +3678,7 @@ function qPaint(){
   let b = $('#qbar'); if (!b){ b = document.createElement('div'); b.id = 'qbar'; document.body.append(b); }
   const f = qFails[0];
   if (f){
+    if (f.code==='duplicate' && f.lost){ qFails.shift(); qSave(); toast('Already saved'); refresh(false); return qPaint(); }
     const dup = f.code==='duplicate', stale = f.code==='stale';
     b.className = 'qbar err';
     b.innerHTML = `<div class="qt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v5M12 16.5v.01"/><circle cx="12" cy="12" r="9"/></svg><b>Not saved</b>${qFails.length>1 ? `<span>+${qFails.length-1} more</span>` : ''}</div>
